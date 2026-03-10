@@ -5,14 +5,23 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-
+  build-and-test:
     runs-on: ubuntu-latest
 
-    steps:
+    services:
+      # optional: add database service here if needed
 
+    steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies for testing
+        run: pip install pytest requests
 
       - name: Build Docker images
         run: docker compose build
@@ -20,5 +29,13 @@ jobs:
       - name: Start containers
         run: docker compose up -d
 
-      - name: List running containers
-        run: docker ps
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting 10 seconds for services to start..."
+          sleep 10
+
+      - name: Run tests
+        run: python -m pytest test_api.py
+
+      - name: Stop and remove containers
+        run: docker compose down
